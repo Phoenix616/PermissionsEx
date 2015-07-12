@@ -18,12 +18,11 @@
  */
 package ru.tehkode.permissions;
 
-import org.bukkit.Bukkit;
-import org.bukkit.World;
-import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.entity.Player;
+import net.md_5.bungee.api.ProxyServer;
+import net.md_5.bungee.api.connection.ProxiedPlayer;
+import net.md_5.bungee.config.Configuration;
 import ru.tehkode.permissions.backends.PermissionBackend;
-import ru.tehkode.permissions.bukkit.PermissionsExConfig;
+import ru.tehkode.permissions.bungee.PermissionsExConfig;
 import ru.tehkode.permissions.events.PermissionEvent;
 import ru.tehkode.permissions.events.PermissionSystemEvent;
 import ru.tehkode.permissions.exceptions.PermissionBackendException;
@@ -56,8 +55,9 @@ public class PermissionManager {
 	protected boolean userAddGroupsLast = false;
 
 	protected PermissionMatcher matcher = new RegExpMatcher();
+    private Map<String, Permission> perms = new ConcurrentHashMap<>();
 
-	public PermissionManager(PermissionsExConfig config, Logger logger, NativeInterface nativeI) throws PermissionBackendException {
+    public PermissionManager(PermissionsExConfig config, Logger logger, NativeInterface nativeI) throws PermissionBackendException {
 		this.config = config;
 		this.logger = logger;
 		this.nativeI = nativeI;
@@ -102,38 +102,38 @@ public class PermissionManager {
 	 * @param permission permission string to check against
 	 * @return true on success false otherwise
 	 */
-	public boolean has(Player player, String permission) {
-		return this.has(player.getUniqueId(), permission, player.getWorld().getName());
+	public boolean has(ProxiedPlayer player, String permission) {
+		return this.has(player.getUniqueId(), permission, player.getServer().getInfo().getName());
 	}
 
 	/**
-	 * Check if player has specified permission in world
+	 * Check if player has specified permission in server
 	 *
 	 * @param player     player object
 	 * @param permission permission as string to check against
-	 * @param world      world's name as string
+	 * @param server     server's name as string
 	 * @return true on success false otherwise
 	 */
-	public boolean has(Player player, String permission, String world) {
-		return this.has(player.getUniqueId(), permission, world);
+	public boolean has(ProxiedPlayer player, String permission, String server) {
+		return this.has(player.getUniqueId(), permission, server);
 	}
 
 	/**
-	 * Check if player with name has permission in world
+	 * Check if player with name has permission in server
 	 *
 	 * @param playerName player name
 	 * @param permission permission as string to check against
-	 * @param world      world's name as string
+	 * @param server     server's name as string
 	 * @return true on success false otherwise
 	 */
-	public boolean has(String playerName, String permission, String world) {
+	public boolean has(String playerName, String permission, String server) {
 		PermissionUser user = this.getUser(playerName);
 
 		if (user == null) {
 			return false;
 		}
 
-		return user.has(permission, world);
+		return user.has(permission, server);
 	}
 
 	/**
@@ -141,13 +141,13 @@ public class PermissionManager {
 	 *
 	 * @param playerId player name
 	 * @param permission permission as string to check against
-	 * @param world      world's name as string
+	 * @param server     server's name as string
 	 * @return true on success false otherwise
 	 */
-	public boolean has(UUID playerId, String permission, String world) {
+	public boolean has(UUID playerId, String permission, String server) {
 		PermissionUser user = this.getUser(playerId);
 
-		return user != null && user.has(permission, world);
+		return user != null && user.has(permission, server);
 
 	}
 
@@ -197,7 +197,7 @@ public class PermissionManager {
 	 * @param player player object
 	 * @return PermissionUser instance
 	 */
-	public PermissionUser getUser(Player player) {
+	public PermissionUser getUser(ProxiedPlayer player) {
 		return this.getUser(player.getUniqueId().toString(), player.getName(), true);
 	}
 
@@ -257,7 +257,7 @@ public class PermissionManager {
 	 */
 	public Set<PermissionUser> getUsers() {
 		Set<PermissionUser> users = new HashSet<>();
-		for (Player p : Bukkit.getServer().getOnlinePlayers()) {
+		for (ProxiedPlayer p : ProxyServer.getInstance().getPlayers()) {
 			users.add(getUser(p));
 		}
 		for (String name : backend.getUserIdentifiers()) {
@@ -352,7 +352,7 @@ public class PermissionManager {
 		this.users.remove(userName.toLowerCase());
 	}
 
-	public void resetUser(Player ply) {
+	public void resetUser(ProxiedPlayer ply) {
 		this.users.remove(ply.getUniqueId().toString());
 		resetUser(ply.getName());
 	}
@@ -383,7 +383,7 @@ public class PermissionManager {
 	 *
 	 * @param player
 	 */
-	public void clearUserCache(Player player) {
+	public void clearUserCache(ProxiedPlayer player) {
 		this.clearUserCache(player.getUniqueId());
 	}
 
@@ -476,8 +476,8 @@ public class PermissionManager {
 	public List<PermissionGroup> getGroups(String groupName, boolean inheritance) {
 		List<PermissionGroup> groups = new ArrayList<>();
 
-		for (World world : Bukkit.getServer().getWorlds()) {
-			groups.addAll(getGroups(groupName, world.getName(), inheritance));
+		for (String server : ProxyServer.getInstance().getServers().keySet()) {
+			groups.addAll(getGroups(groupName, server, inheritance));
 		}
 
 		// Common space users
@@ -567,7 +567,7 @@ public class PermissionManager {
 	 * @param worldName World name
 	 * @return Array of parent world, if world does not exist return empty array
 	 */
-	public List<String> getWorldInheritance(String worldName) {
+	public List<String> getServerInheritance(String worldName) {
 		return backend.getWorldInheritance(worldName);
 	}
 
@@ -577,7 +577,7 @@ public class PermissionManager {
 	 * @param world        world name which inheritance should be set
 	 * @param parentWorlds array of parent world names
 	 */
-	public void setWorldInheritance(String world, List<String> parentWorlds) {
+	public void setServerInheritance(String world, List<String> parentWorlds) {
 		backend.setWorldInheritance(world, parentWorlds);
 		for (PermissionUser user : getActiveUsers()) { // Clear user cache
 			user.clearCache();
@@ -615,7 +615,7 @@ public class PermissionManager {
 	 * @param backendName Name of the configuration section which describes this backend
 	 */
 	public PermissionBackend createBackend(String backendName) throws PermissionBackendException {
-		ConfigurationSection config = this.config.getBackendConfig(backendName);
+		Configuration config = this.config.getBackendConfig(backendName);
 		String backendType = config.getString("type");
 		if (backendType == null) {
 			config.set("type", backendType = backendName);
@@ -720,4 +720,8 @@ public class PermissionManager {
 	public ScheduledExecutorService getExecutor() {
 		return executor;
 	}
+
+    public Permission getPermission(String perm) {
+        return perms.get(perm);
+    }
 }

@@ -133,11 +133,11 @@ public class PermissionGroup extends PermissionEntity implements Comparable<Perm
 	 * @param checkInheritance set to false to check only the direct inheritance
 	 * @return true if this group is descendant or direct parent of specified group
 	 */
-	public boolean isChildOf(PermissionGroup group, String worldName, boolean checkInheritance) {
-		return isChildOf(group, worldName, checkInheritance ? new HashSet<String>() : null);
+	public boolean isChildOf(PermissionGroup group, String serverName, boolean checkInheritance) {
+		return isChildOf(group, serverName, checkInheritance ? new HashSet<String>() : null);
 	}
 
-	private boolean isChildOf(PermissionGroup group, String worldName, Set<String> visitedParents) {
+	private boolean isChildOf(PermissionGroup group, String serverName, Set<String> visitedParents) {
 		if (group == null) {
 			return false;
 		}
@@ -146,7 +146,7 @@ public class PermissionGroup extends PermissionEntity implements Comparable<Perm
 			visitedParents.add(this.getIdentifier());
 		}
 
-		for (String parentGroup : getData().getParents(worldName)) {
+		for (String parentGroup : getData().getParents(serverName)) {
 			if (visitedParents != null && visitedParents.contains(parentGroup)) {
 				continue;
 			}
@@ -155,7 +155,7 @@ public class PermissionGroup extends PermissionEntity implements Comparable<Perm
 				return true;
 			}
 
-			if (visitedParents != null && manager.getGroup(parentGroup).isChildOf(group, worldName, visitedParents)) {
+			if (visitedParents != null && manager.getGroup(parentGroup).isChildOf(group, serverName, visitedParents)) {
 				return true;
 			}
 		}
@@ -173,8 +173,8 @@ public class PermissionGroup extends PermissionEntity implements Comparable<Perm
 		return this.isChildOf(group, null, checkInheritance);
 	}
 
-	public boolean isChildOf(PermissionGroup group, String worldName) {
-		return isChildOf(group, worldName, false);
+	public boolean isChildOf(PermissionGroup group, String serverName) {
+		return isChildOf(group, serverName, false);
 	}
 
 	public boolean isChildOf(PermissionGroup group) {
@@ -188,8 +188,8 @@ public class PermissionGroup extends PermissionEntity implements Comparable<Perm
 	 * @param checkInheritance set to false to check only the direct inheritance
 	 * @return
 	 */
-	public boolean isChildOf(String groupName, String worldName, boolean checkInheritance) {
-		return isChildOf(this.manager.getGroup(groupName), worldName, checkInheritance);
+	public boolean isChildOf(String groupName, String serverName, boolean checkInheritance) {
+		return isChildOf(this.manager.getGroup(groupName), serverName, checkInheritance);
 	}
 
 	public boolean isChildOf(String groupName, boolean checkInheritance) {
@@ -202,8 +202,8 @@ public class PermissionGroup extends PermissionEntity implements Comparable<Perm
 	 * @param groupName to check against
 	 * @return
 	 */
-	public boolean isChildOf(String groupName, String worldName) {
-		return this.isChildOf(groupName, worldName, false);
+	public boolean isChildOf(String groupName, String serverName) {
+		return this.isChildOf(groupName, serverName, false);
 	}
 
 	public boolean isChildOf(String groupName) {
@@ -215,8 +215,8 @@ public class PermissionGroup extends PermissionEntity implements Comparable<Perm
 	 *
 	 * @return
 	 */
-	public List<PermissionGroup> getChildGroups(String worldName) {
-		return this.manager.getGroups(this.getIdentifier(), worldName, false);
+	public List<PermissionGroup> getChildGroups(String serverName) {
+		return this.manager.getGroups(this.getIdentifier(), serverName, false);
 	}
 
 	public List<PermissionGroup> getChildGroups() {
@@ -241,8 +241,8 @@ public class PermissionGroup extends PermissionEntity implements Comparable<Perm
 	 *
 	 * @return
 	 */
-	public Set<PermissionUser> getUsers(String worldName) {
-		return this.manager.getUsers(this.getIdentifier(), worldName, false);
+	public Set<PermissionUser> getUsers(String serverName) {
+		return this.manager.getUsers(this.getIdentifier(), serverName, false);
 	}
 
 	public Set<PermissionUser> getUsers() {
@@ -257,12 +257,12 @@ public class PermissionGroup extends PermissionEntity implements Comparable<Perm
 		return this.manager.getActiveUsers(this.getIdentifier(), inheritance);
 	}
 
-	public boolean isDefault(String worldName) {
-		return getOwnOptionBoolean("default", worldName, false);
+	public boolean isDefault(String serverName) {
+		return getOwnOptionBoolean("default", serverName, false);
 	}
 
-	public void setDefault(boolean def, String worldName) {
-		setOption("default", String.valueOf(def), worldName);
+	public void setDefault(boolean def, String serverName) {
+		setOption("default", String.valueOf(def), serverName);
 		callEvent(PermissionEntityEvent.Action.DEFAULTGROUP_CHANGED);
 	}
 
@@ -282,16 +282,16 @@ public class PermissionGroup extends PermissionEntity implements Comparable<Perm
 		super.remove();
 	}
 
-	private void clearChildren(String worldName) {
-		for (PermissionGroup group : this.getChildGroups(worldName)) {
-			List<PermissionGroup> parentGroups = new LinkedList<>(group.getOwnParents(worldName));
+	private void clearChildren(String serverName) {
+		for (PermissionGroup group : this.getChildGroups(serverName)) {
+			List<PermissionGroup> parentGroups = new LinkedList<>(group.getOwnParents(serverName));
 			parentGroups.remove(this);
 
-			group.setParents(parentGroups, worldName);
+			group.setParents(parentGroups, serverName);
 		}
 
-		for (PermissionUser user : this.getUsers(worldName)) {
-			user.removeGroup(this, worldName);
+		for (PermissionUser user : this.getUsers(serverName)) {
+			user.removeGroup(this, serverName);
 		}
 	}
 
@@ -309,8 +309,8 @@ public class PermissionGroup extends PermissionEntity implements Comparable<Perm
 	 * @deprecated See {@link #getParentIdentifiers(String)}
 	 */
 	@Deprecated
-	public String[] getParentGroupsNames(String worldName) {
-		return getParentIdentifiers(worldName).toArray(new String[0]);
+	public String[] getParentGroupsNames(String serverName) {
+		return getParentIdentifiers(serverName).toArray(new String[0]);
 	}
 
 	@Deprecated
@@ -325,8 +325,8 @@ public class PermissionGroup extends PermissionEntity implements Comparable<Perm
 	 * @deprecated See {@link #setParentsIdentifier(List, String)}
 	 */
 	@Deprecated
-	public void setParentGroups(List<String> parentGroups, String worldName) {
-		setParentsIdentifier(parentGroups, worldName);
+	public void setParentGroups(List<String> parentGroups, String serverName) {
+		setParentsIdentifier(parentGroups, serverName);
 	}
 
 	@Deprecated
@@ -340,8 +340,8 @@ public class PermissionGroup extends PermissionEntity implements Comparable<Perm
 	 * @param parentGroups Array of parent groups objects to set
 	 */
 	@Deprecated
-	public void setParentGroupObjects(List<PermissionGroup> parentGroups, String worldName) {
-		setParents(parentGroups, worldName);
+	public void setParentGroupObjects(List<PermissionGroup> parentGroups, String serverName) {
+		setParents(parentGroups, serverName);
 	}
 
 	@Deprecated
@@ -357,8 +357,8 @@ public class PermissionGroup extends PermissionEntity implements Comparable<Perm
 	 * @deprecated Use {@link #getParents(String)} instead
 	 */
 	@Deprecated
-	public List<PermissionGroup> getParentGroups(String worldName) {
-		return getParents(worldName);
+	public List<PermissionGroup> getParentGroups(String serverName) {
+		return getParents(serverName);
 	}
 
 	@Deprecated

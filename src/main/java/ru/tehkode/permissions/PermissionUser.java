@@ -18,8 +18,8 @@
  */
 package ru.tehkode.permissions;
 
-import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
+import net.md_5.bungee.api.ProxyServer;
+import net.md_5.bungee.api.connection.ProxiedPlayer;
 import ru.tehkode.permissions.events.PermissionEntityEvent;
 import ru.tehkode.permissions.exceptions.RankingException;
 
@@ -69,7 +69,7 @@ public class PermissionUser extends PermissionEntity {
 	public String getName() {
 		String name = getOwnOption("name", null, null);
 		if (name == null) {
-			Player player = getPlayer();
+			ProxiedPlayer player = getPlayer();
 			if (player != null) {
 				name = player.getName();
 				setOption("name", name);
@@ -85,14 +85,14 @@ public class PermissionUser extends PermissionEntity {
 	}
 
 	@Override
-	public String getOption(String optionName, String worldName, String defaultValue) {
-		String cacheIndex = worldName + "|" + optionName;
+	public String getOption(String optionName, String serverName, String defaultValue) {
+		String cacheIndex = serverName + "|" + optionName;
 
 		if (this.cachedOptions.containsKey(cacheIndex)) {
 			return this.cachedOptions.get(cacheIndex);
 		}
 
-		String value = super.getOption(optionName, worldName, null);
+		String value = super.getOption(optionName, serverName, null);
 		if (value != null) {
 			this.cachedOptions.put(cacheIndex, value);
 			return value;
@@ -103,17 +103,17 @@ public class PermissionUser extends PermissionEntity {
 	}
 
 	@Override
-	protected List<PermissionGroup> getParentsInternal(String worldName) {
-		if (!this.cachedGroups.containsKey(worldName)) {
-			List<PermissionGroup> groups = super.getParentsInternal(worldName);
+	protected List<PermissionGroup> getParentsInternal(String serverName) {
+		if (!this.cachedGroups.containsKey(serverName)) {
+			List<PermissionGroup> groups = super.getParentsInternal(serverName);
 			if (groups.isEmpty()) {
-				groups.addAll(manager.getDefaultGroups(worldName));
+				groups.addAll(manager.getDefaultGroups(serverName));
 				Collections.sort(groups);
 			}
-			this.cachedGroups.put(worldName, groups);
+			this.cachedGroups.put(serverName, groups);
 		}
 
-		return this.cachedGroups.get(worldName);
+		return this.cachedGroups.get(serverName);
 	}
 
 	@Deprecated
@@ -126,12 +126,12 @@ public class PermissionUser extends PermissionEntity {
 	 *
 	 * @param groupName group's name as String
 	 */
-	public void addGroup(String groupName, String worldName) {
+	public void addGroup(String groupName, String serverName) {
 		if (groupName == null || groupName.isEmpty()) {
 			return;
 		}
 
-		List<String> groups = new ArrayList<>(getOwnParentIdentifiers(worldName));
+		List<String> groups = new ArrayList<>(getOwnParentIdentifiers(serverName));
 
 		if (groups.contains(groupName)) {
 			return;
@@ -143,7 +143,7 @@ public class PermissionUser extends PermissionEntity {
 			groups.add(0, groupName); //add group to start of list
 		}
 
-		this.setParentsIdentifier(groups, worldName);
+		this.setParentsIdentifier(groups, serverName);
 	}
 
 	public void addGroup(String groupName) {
@@ -155,23 +155,23 @@ public class PermissionUser extends PermissionEntity {
 	 *
 	 * @param group as PermissionGroup object
 	 */
-	public void addGroup(PermissionGroup group, String worldName) {
+	public void addGroup(PermissionGroup group, String serverName) {
 		if (group == null) {
 			return;
 		}
 
-		this.addGroup(group.getIdentifier(), worldName);
+		this.addGroup(group.getIdentifier(), serverName);
 	}
 
 	public void addGroup(PermissionGroup group) {
 		this.addGroup(group, null);
 	}
 
-	public void addGroup(String groupName, String worldName, long lifetime) {
-		this.addGroup(groupName, worldName);
+	public void addGroup(String groupName, String serverName, long lifetime) {
+		this.addGroup(groupName, serverName);
 
 		if (lifetime > 0) {
-			this.setOption("group-" + groupName + "-until", Long.toString(System.currentTimeMillis() / 1000 + lifetime), worldName);
+			this.setOption("group-" + groupName + "-until", Long.toString(System.currentTimeMillis() / 1000 + lifetime), serverName);
 			updateTimedGroups();
 		}
 	}
@@ -181,18 +181,18 @@ public class PermissionUser extends PermissionEntity {
 	 *
 	 * @param groupName group's name as String
 	 */
-	public void removeGroup(String groupName, String worldName) {
+	public void removeGroup(String groupName, String serverName) {
 		if (groupName == null || groupName.isEmpty()) {
 			return;
 		}
 
-		List<String> groups = new ArrayList<>(getOwnParentIdentifiers(worldName));
+		List<String> groups = new ArrayList<>(getOwnParentIdentifiers(serverName));
 		if (!groups.contains(groupName)) {
 			return;
 		}
 
 		groups.remove(groupName);
-		this.setParentsIdentifier(groups, worldName);
+		this.setParentsIdentifier(groups, serverName);
 	}
 
 	public void removeGroup(String groupName) {
@@ -204,17 +204,17 @@ public class PermissionUser extends PermissionEntity {
 	 *
 	 * @param group group as PermissionGroup object
 	 */
-	public void removeGroup(PermissionGroup group, String worldName) {
+	public void removeGroup(PermissionGroup group, String serverName) {
 		if (group == null) {
 			return;
 		}
 
-		this.removeGroup(group.getIdentifier(), worldName);
+		this.removeGroup(group.getIdentifier(), serverName);
 	}
 
 	public void removeGroup(PermissionGroup group) {
-		for (String worldName : this.getWorlds()) {
-			this.removeGroup(group, worldName);
+		for (String serverName : this.getWorlds()) {
+			this.removeGroup(group, serverName);
 		}
 
 		this.removeGroup(group, null);
@@ -224,17 +224,17 @@ public class PermissionUser extends PermissionEntity {
 	 * Check if this user is member of group or one of its descendant groups (optionally)
 	 *
 	 * @param group            group as PermissionGroup object
-	 * @param worldName
+	 * @param serverName
 	 * @param checkInheritance if true then descendant groups of the given group would be checked too
 	 * @return true on success, false otherwise
 	 */
-	public boolean inGroup(PermissionGroup group, String worldName, boolean checkInheritance) {
-		for (PermissionGroup parentGroup : this.getParents(worldName)) {
+	public boolean inGroup(PermissionGroup group, String serverName, boolean checkInheritance) {
+		for (PermissionGroup parentGroup : this.getParents(serverName)) {
 			if (parentGroup.equals(group)) {
 				return true;
 			}
 
-			if (checkInheritance && parentGroup.isChildOf(group, worldName, true)) {
+			if (checkInheritance && parentGroup.isChildOf(group, serverName, true)) {
 				return true;
 			}
 		}
@@ -243,8 +243,8 @@ public class PermissionUser extends PermissionEntity {
 	}
 
 	public boolean inGroup(PermissionGroup group, boolean checkInheritance) {
-		for (String worldName : this.getWorlds()) {
-			if (this.inGroup(group, worldName, checkInheritance)) {
+		for (String serverName : this.getWorlds()) {
+			if (this.inGroup(group, serverName, checkInheritance)) {
 				return true;
 			}
 		}
@@ -256,12 +256,12 @@ public class PermissionUser extends PermissionEntity {
 	 * Check if this user is member of group or one of its descendant groups (optionally)
 	 *
 	 * @param groupName        group's name to check
-	 * @param worldName
+	 * @param serverName
 	 * @param checkInheritance if true than descendant groups of specified group would be checked too
 	 * @return true on success, false otherwise
 	 */
-	public boolean inGroup(String groupName, String worldName, boolean checkInheritance) {
-		return this.inGroup(this.manager.getGroup(groupName), worldName, checkInheritance);
+	public boolean inGroup(String groupName, String serverName, boolean checkInheritance) {
+		return this.inGroup(this.manager.getGroup(groupName), serverName, checkInheritance);
 	}
 
 	public boolean inGroup(String groupName, boolean checkInheritance) {
@@ -272,11 +272,11 @@ public class PermissionUser extends PermissionEntity {
 	 * Check if this user is member of group or one of its descendant groups
 	 *
 	 * @param group
-	 * @param worldName
+	 * @param serverName
 	 * @return true on success, false otherwise
 	 */
-	public boolean inGroup(PermissionGroup group, String worldName) {
-		return this.inGroup(group, worldName, true);
+	public boolean inGroup(PermissionGroup group, String serverName) {
+		return this.inGroup(group, serverName, true);
 	}
 
 	public boolean inGroup(PermissionGroup group) {
@@ -289,8 +289,8 @@ public class PermissionUser extends PermissionEntity {
 	 * @param groupName group's name
 	 * @return true on success, false otherwise
 	 */
-	public boolean inGroup(String groupName, String worldName) {
-		return this.inGroup(this.manager.getGroup(groupName), worldName, true);
+	public boolean inGroup(String groupName, String serverName) {
+		return this.inGroup(this.manager.getGroup(groupName), serverName, true);
 	}
 
 	public boolean inGroup(String groupName) {
@@ -457,12 +457,12 @@ public class PermissionUser extends PermissionEntity {
 	}
 
 	@Override
-	public List<String> getPermissions(String worldName) {
-		if (!this.cachedPermissions.containsKey(worldName)) {
-			this.cachedPermissions.put(worldName, super.getPermissions(worldName));
+	public List<String> getPermissions(String serverName) {
+		if (!this.cachedPermissions.containsKey(serverName)) {
+			this.cachedPermissions.put(serverName, super.getPermissions(serverName));
 		}
 
-		return this.cachedPermissions.get(worldName);
+		return this.cachedPermissions.get(serverName);
 	}
 
 	protected int getPromoterRankAndCheck(PermissionUser promoter, String ladderName) throws RankingException {
@@ -494,39 +494,39 @@ public class PermissionUser extends PermissionEntity {
 	}
 
 	@Override
-	public String getPrefix(String worldName) {
-		if (!this.cachedPrefix.containsKey(worldName)) {
-			this.cachedPrefix.put(worldName, super.getPrefix(worldName));
+	public String getPrefix(String serverName) {
+		if (!this.cachedPrefix.containsKey(serverName)) {
+			this.cachedPrefix.put(serverName, super.getPrefix(serverName));
 		}
 
-		return this.cachedPrefix.get(worldName);
+		return this.cachedPrefix.get(serverName);
 	}
 
 	@Override
 	public boolean has(String permission) {
-		Player player = getPlayer();
+        ProxiedPlayer player = getPlayer();
 		if (player != null) {
-			return this.has(permission, player.getWorld().getName());
+			return this.has(permission, player.getServer().getInfo().getName());
 		}
 
 		return super.has(permission);
 	}
 
-	public Player getPlayer() {
+	public ProxiedPlayer getPlayer() {
 		try {
-			return Bukkit.getServer().getPlayer(UUID.fromString(getIdentifier()));
+			return ProxyServer.getInstance().getPlayer(UUID.fromString(getIdentifier()));
 		} catch (Throwable ex) { // Not a UUID or method not implemented in server build
-			return Bukkit.getServer().getPlayerExact(getIdentifier());
+			return ProxyServer.getInstance().getPlayer(getIdentifier());
 		}
 	}
 
 	@Override
-	public String getSuffix(String worldName) {
-		if (!this.cachedSuffix.containsKey(worldName)) {
-			this.cachedSuffix.put(worldName, super.getSuffix(worldName));
+	public String getSuffix(String serverName) {
+		if (!this.cachedSuffix.containsKey(serverName)) {
+			this.cachedSuffix.put(serverName, super.getSuffix(serverName));
 		}
 
-		return this.cachedSuffix.get(worldName);
+		return this.cachedSuffix.get(serverName);
 	}
 
 	@Override
@@ -564,8 +564,8 @@ public class PermissionUser extends PermissionEntity {
 	@Override
 	public boolean explainExpression(String expression) {
 		if (expression == null && this.manager.allowOps) {
-			Player player = getPlayer();
-			if (player != null && player.isOp()) {
+            ProxiedPlayer player = getPlayer();
+			if (player != null) {
 				return true;
 			}
 		}
@@ -632,12 +632,12 @@ public class PermissionUser extends PermissionEntity {
 	/**
 	 * Get groups for this user for specified world
 	 *
-	 * @param worldName Name of world
+	 * @param serverName Name of world
 	 * @return PermissionGroup groups
 	 */
 	@Deprecated
-	public PermissionGroup[] getGroups(String worldName) {
-		return getParents(worldName).toArray(new PermissionGroup[0]);
+	public PermissionGroup[] getGroups(String serverName) {
+		return getParents(serverName).toArray(new PermissionGroup[0]);
 	}
 
 	/**
@@ -656,8 +656,8 @@ public class PermissionUser extends PermissionEntity {
 	 * @return String array of user's group names
 	 */
 	@Deprecated
-	public String[] getGroupNames(String worldName) {
-		return getParentIdentifiers(worldName).toArray(new String[0]);
+	public String[] getGroupNames(String serverName) {
+		return getParentIdentifiers(serverName).toArray(new String[0]);
 	}
 
 	/**
@@ -666,8 +666,8 @@ public class PermissionUser extends PermissionEntity {
 	 * @param groups array of parent group names
 	 */
 	@Deprecated
-	public void setGroups(String[] groups, String worldName) {
-		setParentsIdentifier(Arrays.asList(groups), worldName);
+	public void setGroups(String[] groups, String serverName) {
+		setParentsIdentifier(Arrays.asList(groups), serverName);
 	}
 
 	@Deprecated
@@ -681,8 +681,8 @@ public class PermissionUser extends PermissionEntity {
 	 * @param parentGroups array of parent group objects
 	 */
 	@Deprecated
-	public void setGroups(PermissionGroup[] parentGroups, String worldName) {
-		setParents(Arrays.asList(parentGroups), worldName);
+	public void setGroups(PermissionGroup[] parentGroups, String serverName) {
+		setParents(Arrays.asList(parentGroups), serverName);
 	}
 
 	@Deprecated

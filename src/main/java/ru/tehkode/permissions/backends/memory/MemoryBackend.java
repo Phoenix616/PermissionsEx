@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.bukkit.configuration.ConfigurationSection;
+import net.md_5.bungee.config.Configuration;
 import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.PermissionsGroupData;
 import ru.tehkode.permissions.PermissionsUserData;
@@ -40,7 +40,7 @@ import ru.tehkode.permissions.exceptions.PermissionBackendException;
  */
 public class MemoryBackend extends PermissionBackend {
 
-    public MemoryBackend(PermissionManager manager, ConfigurationSection config) throws PermissionBackendException {
+    public MemoryBackend(PermissionManager manager, Configuration config) throws PermissionBackendException {
         super(manager, config);
     }
 

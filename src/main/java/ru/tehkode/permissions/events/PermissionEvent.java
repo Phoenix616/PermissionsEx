@@ -18,7 +18,8 @@
  */
 package ru.tehkode.permissions.events;
 
-import org.bukkit.event.Event;
+
+import net.md_5.bungee.api.plugin.Event;
 
 import java.io.Serializable;
 import java.util.UUID;

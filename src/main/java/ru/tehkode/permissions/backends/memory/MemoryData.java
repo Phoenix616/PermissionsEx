@@ -15,10 +15,10 @@ import java.util.Set;
  */
 public class MemoryData implements PermissionsGroupData, PermissionsUserData {
 	private String name;
-	private final HashMap<String, String> worldPrefix = new HashMap<>();
-	private final HashMap<String, String> worldSuffix = new HashMap<>();
-	private final HashMap<String, List<String>> worldsPermissions = new HashMap<>();
-	private final Map<String, Map<String, String>> worldsOptions = new HashMap<>();
+	private final HashMap<String, String> serverPrefix = new HashMap<>();
+	private final HashMap<String, String> serverSuffix = new HashMap<>();
+	private final HashMap<String, List<String>> serversPermissions = new HashMap<>();
+	private final Map<String, Map<String, String>> serversOptions = new HashMap<>();
 	private final Map<String, List<String>> parents = new HashMap<>();
 	private final Map<String, Boolean> defaultVals = new HashMap<>();
 
@@ -27,13 +27,13 @@ public class MemoryData implements PermissionsGroupData, PermissionsUserData {
 	}
 
 	@Override
-	public List<String> getParents(String worldName) {
-		return parents.containsKey(worldName) ? parents.get(worldName) : Collections.<String>emptyList();
+	public List<String> getParents(String serverName) {
+		return parents.containsKey(serverName) ? parents.get(serverName) : Collections.<String>emptyList();
 	}
 
 	@Override
-	public void setParents(List<String> parents, String worldName) {
-		this.parents.put(worldName, Collections.unmodifiableList(parents));
+	public void setParents(List<String> parents, String serverName) {
+		this.parents.put(serverName, Collections.unmodifiableList(parents));
 	}
 
 	@Override
@@ -46,30 +46,30 @@ public class MemoryData implements PermissionsGroupData, PermissionsUserData {
 	}
 
 	@Override
-	public List<String> getPermissions(String worldName) {
-		return worldsPermissions.containsKey(worldName) ? worldsPermissions.get(worldName)
+	public List<String> getPermissions(String serverName) {
+		return serversPermissions.containsKey(serverName) ? serversPermissions.get(serverName)
 				: Collections.<String>emptyList();
 	}
 
 	@Override
 	public void setPermissions(List<String> permissions, String worldName) {
-		worldsPermissions.put(worldName, Collections.unmodifiableList(permissions));
+		serversPermissions.put(worldName, Collections.unmodifiableList(permissions));
 	}
 
 	@Override
 	public Map<String, List<String>> getPermissionsMap() {
-		return Collections.unmodifiableMap(worldsPermissions);
+		return Collections.unmodifiableMap(serversPermissions);
 	}
 
 	@Override
-	public Set<String> getWorlds() {
-		return Sets.union(worldsOptions.keySet(), worldPrefix.keySet());
+	public Set<String> getServers() {
+		return Sets.union(serversOptions.keySet(), serverPrefix.keySet());
 	}
 
 	@Override
-	public String getOption(String option, String worldName) {
-		if (worldsOptions.containsKey(worldName)) {
-			Map<String, String> worldOption = worldsOptions.get(worldName);
+	public String getOption(String option, String serverName) {
+		if (serversOptions.containsKey(serverName)) {
+			Map<String, String> worldOption = serversOptions.get(serverName);
 			if (worldOption.containsKey(option)) {
 				return worldOption.get(option);
 			}
@@ -78,24 +78,24 @@ public class MemoryData implements PermissionsGroupData, PermissionsUserData {
 	}
 
 	@Override
-	public void setOption(String option, String worldName, String value) {
-		Map<String, String> worldOptions = worldsOptions.get(worldName);
-		if (worldOptions == null) {
-			worldOptions = new HashMap<>();
-			worldsOptions.put(worldName, worldOptions);
+	public void setOption(String option, String value, String serverName) {
+		Map<String, String> serverOptions = serversOptions.get(serverName);
+		if (serverOptions == null) {
+			serverOptions = new HashMap<>();
+			serversOptions.put(serverName, serverOptions);
 		}
-		worldOptions.put(option, value);
+		serverOptions.put(option, value);
 	}
 
 	@Override
-	public Map<String, String> getOptions(String worldName) {
-		return worldsOptions.containsKey(worldName) ? worldsOptions.get(worldName)
+	public Map<String, String> getOptions(String serverName) {
+		return serversOptions.containsKey(serverName) ? serversOptions.get(serverName)
 				: Collections.<String, String>emptyMap();
 	}
 
 	@Override
 	public Map<String, Map<String, String>> getOptionsMap() {
-		return Collections.unmodifiableMap(worldsOptions);
+		return Collections.unmodifiableMap(serversOptions);
 	}
 
 	@Override

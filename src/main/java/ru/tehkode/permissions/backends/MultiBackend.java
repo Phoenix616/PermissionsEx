@@ -1,5 +1,6 @@
 package ru.tehkode.permissions.backends;
 
+import net.md_5.bungee.config.Configuration;
 import org.bukkit.configuration.ConfigurationSection;
 import org.json.simple.JSONObject;
 import ru.tehkode.permissions.PermissionManager;
@@ -27,7 +28,7 @@ import java.util.Set;
 public class MultiBackend extends PermissionBackend {
 	private final List<PermissionBackend> backends = new ArrayList<>();
 	private final Map<String, PermissionBackend> fallbackBackends = new HashMap<>();
-	public MultiBackend(PermissionManager manager, ConfigurationSection backendConfig) throws PermissionBackendException {
+	public MultiBackend(PermissionManager manager, Configuration backendConfig) throws PermissionBackendException {
 		super(manager, backendConfig);
 		Map<String, PermissionBackend> backendMap = new HashMap<>();
 		List<String> backendNames = backendConfig.getStringList("backends");
@@ -42,15 +43,15 @@ public class MultiBackend extends PermissionBackend {
 		}
 
 		// Fallbacks
-		ConfigurationSection fallbackSection = backendConfig.getConfigurationSection("fallback");
+		Configuration fallbackSection = backendConfig.getSection("fallback");
 		if (fallbackSection != null) {
-			for (Map.Entry<String, Object> ent : fallbackSection.getValues(false).entrySet()) {
+			for (String key : fallbackSection.getKeys()) {
 				@SuppressWarnings("SuspiciousMethodCalls")
-				PermissionBackend backend = backendMap.get(ent.getValue());
+				PermissionBackend backend = backendMap.get(fallbackSection.getString(key));
 				if (backend == null) {
-					throw new PermissionBackendException("Fallback backend type " + ent.getValue() + " is not listed in the backends section of MultiBackend (and must be for this contraption to work)");
+					throw new PermissionBackendException("Fallback backend type " + fallbackSection.getString(key) + " is not listed in the backends section of MultiBackend (and must be for this contraption to work)");
 				}
-				fallbackBackends.put(ent.getKey(), backend);
+				fallbackBackends.put(key, backend);
 			}
 		}
 	}

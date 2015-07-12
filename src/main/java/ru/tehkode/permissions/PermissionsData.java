@@ -19,10 +19,10 @@ public interface PermissionsData {
 	/**
 	 * Returns all permissions for specified world
 	 *
-	 * @param worldName
+	 * @param serverName
 	 * @return
 	 */
-	public List<String> getPermissions(String worldName);
+	public List<String> getPermissions(String serverName);
 
 	/**
 	 * Set permissions for specified world
@@ -44,34 +44,34 @@ public interface PermissionsData {
 	 *
 	 * @return
 	 */
-	public Set<String> getWorlds();
+	public Set<String> getServers();
 
 	/**
 	 * Returns option value in specified worlds.
 	 * null if option is not defined in that world
 	 *
 	 * @param option
-	 * @param worldName
+	 * @param serverName
 	 * @return
 	 */
-	public String getOption(String option, String worldName);
+	public String getOption(String option, String serverName);
 
 	/**
 	 * Sets option value in specified world
 	 *
 	 * @param option
 	 * @param value
-	 * @param world
+	 * @param serverName
 	 */
-	public void setOption(String option, String value, String world);
+	public void setOption(String option, String value, String serverName);
 
 	/**
 	 * Returns all options in specified world
 	 *
-	 * @param worldName
+	 * @param serverName
 	 * @return
 	 */
-	public Map<String, String> getOptions(String worldName);
+	public Map<String, String> getOptions(String serverName);
 
 	/**
 	 * Returns ALL options in each world
@@ -83,18 +83,18 @@ public interface PermissionsData {
 	/**
 	 * Return the parent groups of a user or group
 	 *
-	 * @param worldName World or null for common
+	 * @param serverName World or null for common
 	 * @return Unmodifiable list of parents
 	 */
-	public List<String> getParents(String worldName);
+	public List<String> getParents(String serverName);
 
 	/**
 	 * Set parent groups of a user or group
 	 *
 	 * @param parents New list of parents
-	 * @param worldName World name or null for common
+	 * @param serverName World name or null for common
 	 */
-	public void setParents(List<String> parents, String worldName);
+	public void setParents(List<String> parents, String serverName);
 
 	/**
 	 * Returns true if this User/Group exists only in server memory

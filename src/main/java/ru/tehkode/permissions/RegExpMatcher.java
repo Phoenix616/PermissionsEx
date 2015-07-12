@@ -3,10 +3,9 @@ package ru.tehkode.permissions;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import ru.tehkode.permissions.bukkit.ErrorReport;
+import ru.tehkode.permissions.bungee.ErrorReport;
 
 import java.util.concurrent.ExecutionException;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -27,7 +26,7 @@ public class RegExpMatcher implements PermissionMatcher {
 			Pattern permissionMatcher = patternCache.get(expression);
 			return permissionMatcher.matcher(permission).matches();
 		} catch (ExecutionException e) {
-			ErrorReport.handleError("While checking for regex match for " + permission + " against expression " + expression, e);
+			ErrorReport.handleError("While checking for regex match for " + permission + " against expression " + expression, e, null);
 			return false;
 		}
 

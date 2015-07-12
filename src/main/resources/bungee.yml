@@ -1,5 +1,5 @@
 name: PermissionsEx
-main: ru.tehkode.permissions.bukkit.PermissionsEx
+main: ru.tehkode.permissions.bungee.PermissionsEx
 softdepend: ["NetEvents"]
 version: "${project.version}"
 author: [t3hk0d3, zml]
@@ -88,6 +88,6 @@ commands:
            Usage:
            /<command> <user> - Demotes <user> to previous group
 permissions:
-    bungeepermissionsex.disabled:
+    permissionsex.disabled:
         description: Apply this permission to players who should not have pex regex-based permission matching apply
         default: false

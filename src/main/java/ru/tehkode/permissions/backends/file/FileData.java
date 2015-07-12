@@ -3,7 +3,7 @@ package ru.tehkode.permissions.backends.file;
 import org.bukkit.configuration.ConfigurationSection;
 import ru.tehkode.permissions.PermissionsGroupData;
 import ru.tehkode.permissions.PermissionsUserData;
-import ru.tehkode.permissions.bukkit.PermissionsEx;
+import ru.tehkode.permissions.bungee.PermissionsEx;
 
 import java.io.IOException;
 import java.util.*;
@@ -60,8 +60,8 @@ public class FileData implements PermissionsUserData, PermissionsGroupData {
 	 * Permissions
 	 */
 	@Override
-	public List<String> getPermissions(String worldName) {
-		List<String> result = this.node.getStringList(formatPath(worldName, "permissions"));
+	public List<String> getPermissions(String serverName) {
+		List<String> result = this.node.getStringList(formatPath(serverName, "permissions"));
 
 		return result == null ? Collections.<String>emptyList() : Collections.unmodifiableList(result);
 	}
@@ -96,7 +96,7 @@ public class FileData implements PermissionsUserData, PermissionsGroupData {
 	}
 
 	@Override
-	public Set<String> getWorlds() {
+	public Set<String> getServers() {
 		ConfigurationSection worldsSection = this.node.getConfigurationSection("worlds");
 
 		if (worldsSection == null) {
@@ -107,18 +107,18 @@ public class FileData implements PermissionsUserData, PermissionsGroupData {
 	}
 
 	@Override
-	public String getOption(String option, String worldName) {
-		return this.node.getString(formatPath(worldName, "options", option));
+	public String getOption(String option, String serverName) {
+		return this.node.getString(formatPath(serverName, "options", option));
 	}
 
 	@Override
-	public void setOption(String option, String value, String worldName) {
-		this.node.set(formatPath(worldName, "options", option), value);
+	public void setOption(String option, String value, String serverName) {
+		this.node.set(formatPath(serverName, "options", option), value);
 	}
 
 	@Override
-	public Map<String, String> getOptions(String worldName) {
-		ConfigurationSection optionsSection = this.node.getConfigurationSection(formatPath(worldName, "options"));
+	public Map<String, String> getOptions(String serverName) {
+		ConfigurationSection optionsSection = this.node.getConfigurationSection(formatPath(serverName, "options"));
 
 		if (optionsSection == null) {
 			return Collections.emptyMap();
@@ -134,7 +134,7 @@ public class FileData implements PermissionsUserData, PermissionsGroupData {
 
 		allOptions.put(null, this.getOptions(null));
 
-		for (String worldName : this.getWorlds()) {
+		for (String worldName : this.getServers()) {
 			allOptions.put(worldName, this.getOptions(worldName));
 		}
 
@@ -171,7 +171,7 @@ public class FileData implements PermissionsUserData, PermissionsGroupData {
 		Map<String, List<String>> ret = new HashMap<>();
 		ret.put(null, getParents(null));
 
-		for (String world : getWorlds()) {
+		for (String world : getServers()) {
 			ret.put(world, getParents(world));
 		}
 		return Collections.unmodifiableMap(ret);
@@ -179,8 +179,8 @@ public class FileData implements PermissionsUserData, PermissionsGroupData {
 
 
 	@Override
-	public List<String> getParents(String worldName) {
-		List<String> parents = this.node.getStringList(formatPath(worldName, parentPath));
+	public List<String> getParents(String serverName) {
+		List<String> parents = this.node.getStringList(formatPath(serverName, parentPath));
 		for (Iterator<String> it = parents.iterator(); it.hasNext(); ) {
 			final String test = it.next();
 			if (test == null || test.isEmpty()) {
@@ -196,8 +196,8 @@ public class FileData implements PermissionsUserData, PermissionsGroupData {
 	}
 
 	@Override
-	public void setParents(List<String> parents, String worldName) {
-		this.node.set(formatPath(worldName, parentPath), parents == null ? null : new ArrayList<>(parents));
+	public void setParents(List<String> parents, String serverName) {
+		this.node.set(formatPath(serverName, parentPath), parents == null ? null : new ArrayList<>(parents));
 	}
 
 	@Override

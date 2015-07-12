@@ -18,7 +18,7 @@
  */
 package ru.tehkode.permissions.backends.file;
 
-import org.bukkit.configuration.ConfigurationSection;
+import net.md_5.bungee.config.Configuration;
 import ru.tehkode.permissions.PermissionsGroupData;
 import ru.tehkode.permissions.PermissionsUserData;
 import ru.tehkode.permissions.backends.PermissionBackend;
@@ -47,7 +47,7 @@ public class FileBackend extends PermissionBackend {
 	private final Map<String, List<String>> worldInheritanceCache = new ConcurrentHashMap<>();
 	private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
-	public FileBackend(PermissionManager manager, ConfigurationSection config) throws PermissionBackendException {
+	public FileBackend(PermissionManager manager, Configuration config) throws PermissionBackendException {
 		super(manager, config);
 		String permissionFilename = getConfig().getString("file");
 
@@ -72,48 +72,48 @@ public class FileBackend extends PermissionBackend {
 		addSchemaUpdate(new SchemaUpdate(1) {
 			@Override
 			public void performUpdate() {
-				ConfigurationSection userSection = permissions.getConfigurationSection("users");
+				Configuration userSection = permissions.getConfiguration("users");
 				if (userSection != null) {
 					for (Map.Entry<String, Object> e : userSection.getValues(false).entrySet()) {
-						if (e.getValue() instanceof ConfigurationSection) {
-							allWorlds((ConfigurationSection) e.getValue());
+						if (e.getValue() instanceof Configuration) {
+							allWorlds((Configuration) e.getValue());
 						}
 					}
 				}
-				ConfigurationSection groupSection = permissions.getConfigurationSection("groups");
+				Configuration groupSection = permissions.getConfiguration("groups");
 				if (groupSection != null) {
 					for (Map.Entry<String, Object> e : groupSection.getValues(false).entrySet()) {
-						if (e.getValue() instanceof ConfigurationSection) {
-							allWorlds((ConfigurationSection) e.getValue());
+						if (e.getValue() instanceof Configuration) {
+							allWorlds((Configuration) e.getValue());
 						}
 					}
 				}
 			}
 
-			private void allWorlds(ConfigurationSection section) {
+			private void allWorlds(Configuration section) {
 				singleWorld(section);
-				ConfigurationSection worldSection = section.getConfigurationSection("worlds");
+				Configuration worldSection = section.getConfiguration("worlds");
 				if (worldSection != null) {
 					for (Map.Entry<String, Object> e : worldSection.getValues(false).entrySet()) {
-						if (e.getValue() instanceof ConfigurationSection) {
-							singleWorld((ConfigurationSection) e.getValue());
+						if (e.getValue() instanceof Configuration) {
+							singleWorld((Configuration) e.getValue());
 						}
 					}
 				}
 			}
 
-			private void singleWorld(ConfigurationSection section) {
-				if (section.isSet("prefix")) {
+			private void singleWorld(Configuration section) {
+				if (section.get("prefix", null) != null) {
 					section.set(buildPath("options", "prefix"), section.get("prefix"));
 					section.set("prefix", null);
 				}
 
-				if (section.isSet("suffix")) {
+				if (section.get("suffix", null) != null) {
 					section.set(buildPath("options", "suffix"), section.get("suffix"));
 					section.set("suffix", null);
 				}
 
-				if (section.isSet("default")) {
+				if (section.get("default", null) != null) {
 					section.set(buildPath("options", "default"), section.get("default"));
 					section.set("default", null);
 				}
@@ -168,13 +168,13 @@ public class FileBackend extends PermissionBackend {
 	@Override
 	public Map<String, List<String>> getAllWorldInheritance() {
 		synchronized (lock) {
-			ConfigurationSection worldsSection = this.permissions.getConfigurationSection("worlds");
+			Configuration worldsSection = this.permissions.getConfiguration("worlds");
 			if (worldsSection == null) {
 				return Collections.emptyMap();
 			}
 
 			Map<String, List<String>> ret = new HashMap<>();
-			for (String world : worldsSection.getKeys(false)) {
+			for (String world : worldsSection.getKeys()) {
 				ret.put(world, getWorldInheritance(world));
 			}
 			return Collections.unmodifiableMap(ret);
@@ -200,7 +200,7 @@ public class FileBackend extends PermissionBackend {
 		});
 	}
 
-	private ConfigurationSection getNode(String basePath, String entityName) {
+	private Configuration getNode(String basePath, String entityName) {
 		if (permissions.isLowerCased(basePath)) {
 			entityName = entityName.toLowerCase();
 		}
@@ -209,20 +209,20 @@ public class FileBackend extends PermissionBackend {
 		try {
 
 
-			ConfigurationSection entityNode = this.permissions.getConfigurationSection(nodePath);
+			Configuration entityNode = this.permissions.getConfiguration(nodePath);
 
 			if (entityNode != null) {
 				return entityNode;
 			}
 
 			if (!permissions.isLowerCased(basePath)) {
-				ConfigurationSection users = this.permissions.getConfigurationSection(basePath);
+				Configuration users = this.permissions.getConfiguration(basePath);
 
 				if (users != null) {
-					for (Map.Entry<String, Object> entry : users.getValues(false).entrySet()) {
+					for (Map.Entry<String, Object> entry : users.getValues().entrySet()) {
 						if (entry.getKey().equalsIgnoreCase(entityName)
-								&& entry.getValue() instanceof ConfigurationSection) {
-							return (ConfigurationSection) entry.getValue();
+								&& entry.getValue() instanceof Configuration) {
+							return (Configuration) entry.getValue();
 						}
 					}
 				}
@@ -233,7 +233,7 @@ public class FileBackend extends PermissionBackend {
 
 		lock.writeLock().lock();
 		try {
-			ConfigurationSection section = this.permissions.createSection(nodePath);
+			Configuration section = this.permissions.createSection(nodePath);
 			this.permissions.set(nodePath, null);
 			return section;
 		} finally {
@@ -243,7 +243,7 @@ public class FileBackend extends PermissionBackend {
 
 	@Override
 	public PermissionsUserData getUserData(String userName) {
-		ConfigurationSection section = getNode("users", userName);
+		Configuration section = getNode("users", userName);
 		final CachingUserData data = new CachingUserData(new FileData(section, "group"), getExecutor(), lock);
 		data.load();
 		return data;
@@ -251,7 +251,7 @@ public class FileBackend extends PermissionBackend {
 
 	@Override
 	public PermissionsGroupData getGroupData(String groupName) {
-		ConfigurationSection section = getNode("groups", groupName);
+		Configuration section = getNode("groups", groupName);
 		final CachingGroupData data = new CachingGroupData(new FileData(section, "inheritance"), getExecutor(), lock);
 		data.load();
 		return data;
@@ -261,7 +261,7 @@ public class FileBackend extends PermissionBackend {
 	public boolean hasUser(String userName) {
 		lock.readLock().lock();
 		try {
-			return this.permissions.isConfigurationSection(buildPath("users", userName.toLowerCase()));
+			return this.permissions.isConfiguration(buildPath("users", userName.toLowerCase()));
 		} finally {
 			lock.readLock().unlock();
 		}
@@ -271,11 +271,11 @@ public class FileBackend extends PermissionBackend {
 	public boolean hasGroup(String group) {
 		lock.readLock().lock();
 		try {
-			if (this.permissions.isConfigurationSection(buildPath("groups", group))) {
+			if (this.permissions.isConfiguration(buildPath("groups", group))) {
 				return true;
 			}
 
-			ConfigurationSection userSection = this.permissions.getConfigurationSection("groups");
+			Configuration userSection = this.permissions.getConfiguration("groups");
 			if (userSection != null) {
 				for (String name : userSection.getKeys(false)) {
 					if (group.equalsIgnoreCase(name)) {
@@ -294,7 +294,7 @@ public class FileBackend extends PermissionBackend {
 	public Collection<String> getUserIdentifiers() {
 		lock.readLock().lock();
 		try {
-			ConfigurationSection users = this.permissions.getConfigurationSection("users");
+			Configuration users = this.permissions.getConfiguration("users");
 			return users != null ? users.getKeys(false) : Collections.<String>emptyList();
 		} finally {
 			lock.readLock().unlock();
@@ -305,7 +305,7 @@ public class FileBackend extends PermissionBackend {
 	public Collection<String> getUserNames() {
 		lock.readLock().lock();
 		try {
-			ConfigurationSection users = this.permissions.getConfigurationSection("users");
+			Configuration users = this.permissions.getConfiguration("users");
 
 			if (users == null) {
 				return Collections.emptySet();
@@ -314,8 +314,8 @@ public class FileBackend extends PermissionBackend {
 			Set<String> userNames = new HashSet<>();
 
 			for (Map.Entry<String, Object> entry : users.getValues(false).entrySet()) {
-				if (entry.getValue() instanceof ConfigurationSection) {
-					ConfigurationSection userSection = (ConfigurationSection) entry.getValue();
+				if (entry.getValue() instanceof Configuration) {
+					Configuration userSection = (Configuration) entry.getValue();
 
 					String name = userSection.getString(buildPath("options", "name"));
 					if (name != null) {
@@ -333,7 +333,7 @@ public class FileBackend extends PermissionBackend {
 	public Collection<String> getGroupNames() {
 		lock.readLock().lock();
 		try {
-			ConfigurationSection groups = this.permissions.getConfigurationSection("groups");
+			Configuration groups = this.permissions.getConfiguration("groups");
 			return groups != null ? groups.getKeys(false) : Collections.<String>emptySet();
 		} finally {
 			lock.readLock().unlock();

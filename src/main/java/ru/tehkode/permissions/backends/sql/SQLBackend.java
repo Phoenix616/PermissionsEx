@@ -19,8 +19,8 @@
 package ru.tehkode.permissions.backends.sql;
 
 import com.google.common.collect.ImmutableSet;
+import net.md_5.bungee.config.Configuration;
 import org.apache.commons.dbcp.BasicDataSource;
-import org.bukkit.configuration.ConfigurationSection;
 import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.PermissionsData;
 import ru.tehkode.permissions.PermissionsGroupData;
@@ -71,7 +71,7 @@ public class SQLBackend extends PermissionBackend {
 	private BasicDataSource ds;
 	protected final String dbDriver;
 
-	public SQLBackend(PermissionManager manager, final ConfigurationSection config) throws PermissionBackendException {
+	public SQLBackend(PermissionManager manager, final Configuration config) throws PermissionBackendException {
 		super(manager, config);
 		final String dbUri = getConfig().getString("uri", "");
 		final String dbUser = getConfig().getString("user", "");
@@ -381,7 +381,7 @@ public class SQLBackend extends PermissionBackend {
 	}
 
 	protected final void setupAliases() {
-		ConfigurationSection aliases = getConfig().getConfigurationSection("aliases");
+		Configuration aliases = getConfig().getSection("aliases");
 
 		if (aliases == null) {
 			return;

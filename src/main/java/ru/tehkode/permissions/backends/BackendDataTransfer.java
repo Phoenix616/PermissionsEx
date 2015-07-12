@@ -28,12 +28,12 @@ public class BackendDataTransfer {
 		}
 
 		to.setParents(from.getParents(null), null);
-		for (String world : from.getWorlds()) {
-			List<String> groups =  from.getParents(world);
+		for (String server : from.getServers()) {
+			List<String> groups =  from.getParents(server);
 			if (groups == null || groups.isEmpty()) {
 				continue;
 			}
-			to.setParents(groups, world);
+			to.setParents(groups, server);
 		}
 	}
 

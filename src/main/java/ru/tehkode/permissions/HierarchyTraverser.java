@@ -11,15 +11,15 @@ import java.util.Set;
  */
 public abstract class HierarchyTraverser<Return> {
 	private final PermissionEntity start;
-	private final String world;
+	private final String server;
 	private final boolean traverseInheritance;
 
-	public HierarchyTraverser(PermissionEntity entity, String world) {
-		this(entity, world, true);
+	public HierarchyTraverser(PermissionEntity entity, String server) {
+		this(entity, server, true);
 	}
-	public HierarchyTraverser(PermissionEntity entity, String world, boolean traverseInheritance) {
+	public HierarchyTraverser(PermissionEntity entity, String server, boolean traverseInheritance) {
 		this.start = entity;
-		this.world = world;
+		this.server = server;
 		this.traverseInheritance = traverseInheritance;
 	}
 
@@ -30,8 +30,8 @@ public abstract class HierarchyTraverser<Return> {
 	 * Ordering:
 	 * For each entity (traversed depth-first):
 	 * <ol>
-	 *     <li>Chosen world</li>
-	 *     <li>World inheritance for chosen world</li>
+	 *     <li>Chosen server</li>
+	 *     <li>server inheritance for chosen server</li>
 	 *     <li>Global scope</li>
 	 * </ol>
 	 *
@@ -53,15 +53,15 @@ public abstract class HierarchyTraverser<Return> {
 			}
 			visited.add(current);
 
-			// World-specific
-			if (world != null) {
-				ret = fetchLocal(current, world);
+			// server-specific
+			if (server != null) {
+				ret = fetchLocal(current, server);
 				if (ret != null) {
 					break;
 				}
 
-				// World inheritance
-				ret = traverseWorldInheritance(current);
+				// server inheritance
+				ret = traverseserverInheritance(current);
 				if (ret != null) {
 					break;
 				}
@@ -74,7 +74,7 @@ public abstract class HierarchyTraverser<Return> {
 
 			// Add parents
 			if (traverseInheritance) {
-				List<PermissionGroup> parents = current.getParents(world);
+				List<PermissionGroup> parents = current.getParents(server);
 				for (int i = parents.size() - 1; i >= 0; --i) { // Add parents to be traversed in order provided by getParents
 					entities.addFirst(parents.get(i));
 				}
@@ -84,35 +84,35 @@ public abstract class HierarchyTraverser<Return> {
 	}
 
 	/**
-	 * Traverses world inheritance depth-first.
+	 * Traverses server inheritance depth-first.
 	 *
 	 * @param entity Entity to perform local action on
 	 * @return Any detected results
 	 */
-	private Return traverseWorldInheritance(PermissionEntity entity) {
-		List<String> worldInheritance = entity.manager.getWorldInheritance(world);
-		if (worldInheritance.size() > 0) {
-			Deque<String> worlds = new LinkedList<>(worldInheritance);
-			Set<String> visitedWorlds = new HashSet<>();
+	private Return traverseserverInheritance(PermissionEntity entity) {
+		List<String> serverInheritance = entity.manager.getServerInheritance(server);
+		if (serverInheritance.size() > 0) {
+			Deque<String> servers = new LinkedList<>(serverInheritance);
+			Set<String> visitedservers = new HashSet<>();
 			Return ret = null;
-			while (!worlds.isEmpty()) {
-				String current = worlds.removeFirst();
-				if (visitedWorlds.contains(current)) {
+			while (!servers.isEmpty()) {
+				String current = servers.removeFirst();
+				if (visitedservers.contains(current)) {
 					if (entity.isDebug()) {
-						entity.manager.getLogger().warning("Potential circular inheritance detected with world inheritance for world " + current);
+						entity.manager.getLogger().warning("Potential circular inheritance detected with server inheritance for server " + current);
 					}
 					continue;
 				}
-				visitedWorlds.add(current);
+				visitedservers.add(current);
 
 				ret = fetchLocal(entity, current);
 				if (ret != null) {
 					break;
 				}
 
-				final List<String> nextLevel = entity.manager.getWorldInheritance(current);
+				final List<String> nextLevel = entity.manager.getServerInheritance(current);
 				for (int i = nextLevel.size() - 1; i >= 0; --i) {
-					worlds.add(nextLevel.get(i));
+					servers.add(nextLevel.get(i));
 				}
 			}
 			return ret;
@@ -123,8 +123,8 @@ public abstract class HierarchyTraverser<Return> {
 	/**
 	 * Collects the potential return value from a single entity
 	 * @param entity Entity being checked in
-	 * @param world World being checked in
+	 * @param server server being checked in
 	 * @return The value, or null if not present
 	 */
-	protected abstract Return fetchLocal(PermissionEntity entity, String world);
+	protected abstract Return fetchLocal(PermissionEntity entity, String server);
 }

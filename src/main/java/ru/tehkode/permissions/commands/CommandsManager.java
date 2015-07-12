@@ -25,11 +25,11 @@ import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.bukkit.ChatColor;
-import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
+import net.md_5.bungee.api.ChatColor;
+import net.md_5.bungee.api.CommandSender;
+import net.md_5.bungee.api.connection.ProxiedPlayer;
 import ru.tehkode.permissions.PermissionManager;
-import ru.tehkode.permissions.bukkit.PermissionsEx;
+import ru.tehkode.permissions.bungee.PermissionsEx;
 import ru.tehkode.permissions.commands.exceptions.AutoCompleteChoicesException;
 import ru.tehkode.utils.StringUtils;
 
@@ -65,7 +65,7 @@ public class CommandsManager {
 		listener.onRegistered(this);
 	}
 
-	public boolean execute(CommandSender sender, org.bukkit.command.Command command, String[] args) {
+	public boolean execute(CommandSender sender, net.md_5.bungee.api.plugin.Command command, String[] args) {
 		Map<CommandSyntax, CommandBinding> callMap = this.listeners.get(command.getName());
 
 		if (callMap == null) { // No commands registered
@@ -96,8 +96,8 @@ public class CommandsManager {
 		}
 
 		// Check permission
-		if (sender instanceof Player) { // this method are not public and required permission
-			if (!selectedBinding.checkPermissions((Player) sender)) {
+		if (sender instanceof ProxiedPlayer) { // this method are not public and required permission
+			if (!selectedBinding.checkPermissions((ProxiedPlayer) sender)) {
 				plugin.getLogger().warning("User " + sender.getName() + " tried to access chat command \""
 						+ command.getName() + " " + arguments
 						+ "\", but doesn't have permission to do this.");
@@ -226,7 +226,7 @@ public class CommandsManager {
 			this.params = params;
 		}
 
-		public boolean checkPermissions(Player player) {
+		public boolean checkPermissions(ProxiedPlayer player) {
 			PermissionManager manager = PermissionsEx.getPermissionManager();
 
 			String permission = this.getMethodAnnotation().permission();

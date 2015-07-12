@@ -28,8 +28,7 @@ import java.util.Set;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.bukkit.Bukkit;
-import org.bukkit.permissions.Permission;
+import net.md_5.bungee.api.ProxyServer;
 import ru.tehkode.permissions.events.PermissionEntityEvent;
 
 /**
@@ -185,28 +184,28 @@ public abstract class PermissionEntity {
 	}
 
 	/**
-	 * Checks if entity has specified permission in default world
+	 * Checks if entity has specified permission in default server
 	 *
 	 * @param permission Permission to check
 	 * @return true if entity has this permission otherwise false
 	 */
 	public boolean has(String permission) {
-		return this.has(permission, Bukkit.getServer().getWorlds().get(0).getName());
+		return this.has(permission, ProxyServer.getInstance().getConfig().getListeners().iterator().next().getDefaultServer());
 	}
 
 	/**
-	 * Check if entity has specified permission in world
+	 * Check if entity has specified permission in server
 	 *
 	 * @param permission Permission to check
-	 * @param world      World to check permission in
+	 * @param server      Server to check permission in
 	 * @return true if entity has this permission otherwise false
 	 */
-	public boolean has(String permission, String world) {
+	public boolean has(String permission, String server) {
 		if (permission != null && permission.isEmpty()) { // empty permission for public access :)
 			return true;
 		}
 
-		String expression = getMatchingExpression(permission, world);
+		String expression = getMatchingExpression(permission, server);
 
 		if (this.isDebug()) {
 			manager.getLogger().info("User " + this.getIdentifier() + " checked for \"" + permission + "\", " + (expression == null ? "no permission found" : "\"" + expression + "\" found"));
@@ -216,22 +215,22 @@ public abstract class PermissionEntity {
 	}
 
 	/**
-	 * Return all entity permissions in specified world
+	 * Return all entity permissions in specified server
 	 *
-	 * @param world World name
+	 * @param server Server name
 	 * @return Array of permission expressions
 	 */
-	public List<String> getPermissions(String world) {
-		return Collections.unmodifiableList(getPermissionsInternal(world));
+	public List<String> getPermissions(String server) {
+		return Collections.unmodifiableList(getPermissionsInternal(server));
 	}
 
 	/**
-	 * Returns own (without inheritance) permissions of group for world
+	 * Returns own (without inheritance) permissions of group for server
 	 *
-	 * @param world world's world name
+	 * @param server server's server name
 	 * @return Array of permissions for world
-	 */	public List<String> getOwnPermissions(String world) {
-		return Collections.unmodifiableList(getData().getPermissions(world));
+	 */	public List<String> getOwnPermissions(String server) {
+		return Collections.unmodifiableList(getData().getPermissions(server));
 	}
 
 	/**
@@ -255,14 +254,14 @@ public abstract class PermissionEntity {
 		return Collections.unmodifiableMap(ret);
 	}
 
-	protected List<String> getPermissionsInternal(String worldName) {
+	protected List<String> getPermissionsInternal(String serverName) {
 		final List<String> ret = new ArrayList<>();
 
-		new HierarchyTraverser<Void>(this, worldName) {
+		new HierarchyTraverser<Void>(this, serverName) {
 			@Override
-			protected Void fetchLocal(PermissionEntity entity, String world) {
-				for (String perm : entity.getOwnPermissions(world)) {
-					if (perm.startsWith(NON_INHERITABLE_PREFIX) && !PermissionEntity.this.getParents(world).contains(entity)) {
+			protected Void fetchLocal(PermissionEntity entity, String server) {
+				for (String perm : entity.getOwnPermissions(server)) {
+					if (perm.startsWith(NON_INHERITABLE_PREFIX) && !PermissionEntity.this.getParents(server).contains(entity)) {
 						continue;
 					}
 
@@ -270,8 +269,8 @@ public abstract class PermissionEntity {
 					entity.getInheritedChildPermissions(perm, ret);
 				}
 
-				for (String perm : entity.getTimedPermissions(world)) {
-					if (perm.startsWith(NON_INHERITABLE_PREFIX) && !PermissionEntity.this.getParents(world).contains(entity)) {
+				for (String perm : entity.getTimedPermissions(server)) {
+					if (perm.startsWith(NON_INHERITABLE_PREFIX) && !PermissionEntity.this.getParents(server).contains(entity)) {
 						continue;
 					}
 
@@ -295,7 +294,7 @@ public abstract class PermissionEntity {
 			invert = !invert;
 			perm = perm.substring(1);
 		}
-		getInheritedChildPermissions(Bukkit.getPluginManager().getPermission(perm), list, invert);
+		getInheritedChildPermissions(manager.getPermission(perm), list, invert);
 	}
 
 	protected void getInheritedChildPermissions(Permission perm, List<String> list, boolean invert) {
@@ -626,7 +625,7 @@ public abstract class PermissionEntity {
 	 * @return
 	 */
 	public Set<String> getWorlds() {
-		return getData().getWorlds();
+		return getData().getServers();
 	}
 
 	/**

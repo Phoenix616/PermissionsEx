@@ -1,12 +1,11 @@
 package ru.tehkode.permissions.backends;
 
-import org.bukkit.configuration.Configuration;
-import org.bukkit.configuration.ConfigurationSection;
+import net.md_5.bungee.config.Configuration;
 import ru.tehkode.permissions.PermissionManager;
 import ru.tehkode.permissions.PermissionsGroupData;
 import ru.tehkode.permissions.PermissionsUserData;
-import ru.tehkode.permissions.bukkit.ErrorReport;
-import ru.tehkode.permissions.bukkit.PermissionsEx;
+import ru.tehkode.permissions.bungee.ErrorReport;
+import ru.tehkode.permissions.bungee.PermissionsEx;
 import ru.tehkode.permissions.exceptions.PermissionBackendException;
 
 import java.io.File;
@@ -21,7 +20,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -37,7 +35,7 @@ import java.util.logging.Logger;
  */
 public abstract class PermissionBackend {
 	private final PermissionManager manager;
-	private final ConfigurationSection backendConfig;
+	private final Configuration backendConfig;
 	/**
 	 * Executor currently being used to execute backend tasks
 	 */
@@ -50,7 +48,7 @@ public abstract class PermissionBackend {
 	private final ExecutorService asyncExecutor;
 	private final List<SchemaUpdate> schemaUpdates = new LinkedList<>();
 
-	protected PermissionBackend(PermissionManager manager, ConfigurationSection backendConfig) throws PermissionBackendException {
+	protected PermissionBackend(PermissionManager manager, Configuration backendConfig) throws PermissionBackendException {
 		this.manager = manager;
 		this.backendConfig = backendConfig;
 		this.asyncExecutor = Executors.newSingleThreadExecutor();
@@ -90,7 +88,7 @@ public abstract class PermissionBackend {
 					update.performUpdate();
 					newVersion = Math.max(update.getUpdateVersion(), newVersion);
 				} catch (Throwable t) {
-					ErrorReport.handleError("While updating to " + update.getUpdateVersion() + " from " + newVersion, t);
+					ErrorReport.handleError("While updating to " + update.getUpdateVersion() + " from " + newVersion, t, sender);
 					break;
 				}
 			}
@@ -102,7 +100,7 @@ public abstract class PermissionBackend {
 	}
 
 	protected void backupDatabase() throws IOException {
-		try (Writer w = new FileWriter(new File(manager.getConfiguration().getBasedir(), getConfig().getName() + "-backup." + getSchemaVersion() + ".bak"))) {
+		try (Writer w = new FileWriter(new File(manager.getConfiguration().getBasedir(), getConfig().getString("type", getManager().getConfiguration().getDefaultBackend()) + "-backup." + getSchemaVersion() + ".bak"))) {
 			writeContents(w);
 		}
 	}
@@ -137,7 +135,7 @@ public abstract class PermissionBackend {
 		return manager;
 	}
 
-	protected final ConfigurationSection getConfig() {
+	protected final Configuration getConfig() {
 		return backendConfig;
 	}
 
@@ -363,7 +361,7 @@ public abstract class PermissionBackend {
 	 * @param config      Configuration object to access backend settings
 	 * @return new instance of PermissionBackend object
 	 */
-	public static PermissionBackend getBackend(String backendName, PermissionManager manager, ConfigurationSection config) throws PermissionBackendException {
+	public static PermissionBackend getBackend(String backendName, PermissionManager manager, Configuration config) throws PermissionBackendException {
 		return getBackend(backendName, manager, config, DEFAULT_BACKEND);
 	}
 
@@ -376,7 +374,7 @@ public abstract class PermissionBackend {
 	 * @param fallBackBackend name of backend that should be used if specified backend was not found or failed to initialize
 	 * @return new instance of PermissionBackend object
 	 */
-	public static PermissionBackend getBackend(String backendName, PermissionManager manager, ConfigurationSection config, String fallBackBackend) throws PermissionBackendException{
+	public static PermissionBackend getBackend(String backendName, PermissionManager manager, Configuration config, String fallBackBackend) throws PermissionBackendException{
 		if (backendName == null || backendName.isEmpty()) {
 			backendName = DEFAULT_BACKEND;
 		}
@@ -388,7 +386,7 @@ public abstract class PermissionBackend {
 
 			manager.getLogger().info("Initializing " + backendName + " backend");
 
-			Constructor<? extends PermissionBackend> constructor = backendClass.getConstructor(PermissionManager.class, ConfigurationSection.class);
+			Constructor<? extends PermissionBackend> constructor = backendClass.getConstructor(PermissionManager.class, Configuration.class);
 			return constructor.newInstance(manager, config);
 		} catch (ClassNotFoundException e) {
 
@@ -416,7 +414,7 @@ public abstract class PermissionBackend {
 
 	@Override
 	public String toString() {
-		return getClass().getSimpleName() + "{config=" + getConfig().getName() + "}";
+		return getClass().getSimpleName() + "{config=" + getConfig().getString("type", getManager().getConfiguration().getDefaultBackend()) + "}";
 	}
 
 }

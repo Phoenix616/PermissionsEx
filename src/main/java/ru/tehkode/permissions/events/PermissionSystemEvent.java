@@ -18,8 +18,6 @@
  */
 package ru.tehkode.permissions.events;
 
-import org.bukkit.event.HandlerList;
-
 import java.util.UUID;
 
 /**
@@ -27,7 +25,6 @@ import java.util.UUID;
  */
 public class PermissionSystemEvent extends PermissionEvent {
 	protected Action action;
-	private static final HandlerList handlers = new HandlerList();
 
 	public PermissionSystemEvent(UUID sourceUUID, Action action) {
 		super(sourceUUID);
@@ -36,15 +33,6 @@ public class PermissionSystemEvent extends PermissionEvent {
 
 	public Action getAction() {
 		return this.action;
-	}
-
-	@Override
-	public HandlerList getHandlers() {
-		return handlers;
-	}
-
-	public static HandlerList getHandlerList() {
-		return handlers;
 	}
 
 	public enum Action {

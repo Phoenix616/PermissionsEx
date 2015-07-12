@@ -20,7 +20,7 @@ public abstract class CachingData implements PermissionsData {
 	private Map<String, List<String>> permissions;
 	private Map<String, Map<String, String>> options;
 	private Map<String, List<String>> parents;
-	private volatile Set<String> worlds;
+	private volatile Set<String> servers;
 
 	public CachingData(Executor executor, ReadWriteLock lock) {
 		this.executor = executor;
@@ -123,11 +123,11 @@ public abstract class CachingData implements PermissionsData {
 	}
 
 	@Override
-	public List<String> getPermissions(String worldName) {
+	public List<String> getPermissions(String serverName) {
 		if (permissions == null) {
 			loadPermissions();
 		}
-		List<String> ret = permissions.get(worldName);
+		List<String> ret = permissions.get(serverName);
 		return ret == null ? Collections.<String>emptyList() : Collections.unmodifiableList(ret);
 	}
 
@@ -161,29 +161,29 @@ public abstract class CachingData implements PermissionsData {
 	}
 
 	@Override
-	public Set<String> getWorlds() {
-		Set<String> worlds = this.worlds;
-		if (worlds == null) {
+	public Set<String> getServers() {
+		Set<String> servers = this.servers;
+		if (servers == null) {
 			lock.readLock().lock();
 			try {
-				this.worlds = worlds = getBackingData().getWorlds();
+				this.servers = servers = getBackingData().getServers();
 			} finally {
 				lock.readLock().unlock();
 			}
 		}
-		return worlds;
+		return servers;
 	}
 
 	protected void clearWorldsCache() {
-		worlds = null;
+		servers = null;
 	}
 
 	@Override
-	public String getOption(String option, String worldName) {
+	public String getOption(String option, String serverName) {
 		if (options == null) {
 			loadOptions();
 		}
-		Map<String, String> worldOpts = options.get(worldName);
+		Map<String, String> worldOpts = options.get(serverName);
 		if (worldOpts == null) {
 			return null;
 		}
@@ -191,7 +191,7 @@ public abstract class CachingData implements PermissionsData {
 	}
 
 	@Override
-	public void setOption(final String option, final String value, final String world) {
+	public void setOption(final String option, final String value, final String serverName) {
 		if (options == null) {
 			loadOptions();
 		}
@@ -199,11 +199,11 @@ public abstract class CachingData implements PermissionsData {
 			@Override
 			public void run() {
 				if (options != null) {
-					Map<String, String> optionsMap = options.get(world);
+					Map<String, String> optionsMap = options.get(serverName);
 					if (optionsMap == null) {
 						// TODO Concurrentify
 						optionsMap = new HashMap<>();
-						options.put(world, optionsMap);
+						options.put(serverName, optionsMap);
 						clearWorldsCache();
 					}
 					if (value == null) {
@@ -212,17 +212,17 @@ public abstract class CachingData implements PermissionsData {
 						optionsMap.put(option, value);
 					}
 				}
-				getBackingData().setOption(option, value, world);
+				getBackingData().setOption(option, value, serverName);
 			}
 		});
 	}
 
 	@Override
-	public Map<String, String> getOptions(String worldName) {
+	public Map<String, String> getOptions(String serverName) {
 		if (options == null) {
 			loadOptions();
 		}
-		Map<String, String> opts = options.get(worldName);
+		Map<String, String> opts = options.get(serverName);
 		return opts == null ? Collections.<String, String>emptyMap() : Collections.unmodifiableMap(opts);
 	}
 
@@ -239,17 +239,17 @@ public abstract class CachingData implements PermissionsData {
 	}
 
 	@Override
-	public List<String> getParents(String worldName) {
+	public List<String> getParents(String serverName) {
 		if (parents == null) {
 			loadInheritance();
 		}
 
-		List<String> worldParents = parents.get(worldName);
+		List<String> worldParents = parents.get(serverName);
 		return worldParents == null ? Collections.<String>emptyList() : worldParents;
 	}
 
 	@Override
-	public void setParents(final List<String> rawParents, final String worldName) {
+	public void setParents(final List<String> rawParents, final String serverName) {
 		if (this.parents == null) {
 			loadInheritance();
 		}
@@ -257,8 +257,8 @@ public abstract class CachingData implements PermissionsData {
 		executeWrite(new Runnable() {
 			@Override
 			public void run() {
-				parents.put(worldName, Collections.unmodifiableList(safeParents));
-				getBackingData().setParents(safeParents, worldName);
+				parents.put(serverName, Collections.unmodifiableList(safeParents));
+				getBackingData().setParents(safeParents, serverName);
 			}
 		});
 	}
