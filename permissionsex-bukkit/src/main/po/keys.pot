@@ -1,0 +1,76 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2015-10-04 19:17-0700\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: ninja/leaping/permissionsex/bukkit/PEXPermissible.java:183
+msgid "Checked permission %s for player %s in contexts %s: %s"
+msgstr ""
+
+#: ninja/leaping/permissionsex/bukkit/BukkitMessageFormatter.java:85
+msgid "Click to view more info"
+msgstr ""
+
+#: ninja/leaping/permissionsex/bukkit/PermissionsExPlugin.java:111
+msgid "Error occurred while enabling %s"
+msgstr ""
+
+#: ninja/leaping/permissionsex/bukkit/PermissionsExPlugin.java:167
+msgid "Error while loading data for user %s/%s during prelogin: %s"
+msgstr ""
+
+#: ninja/leaping/permissionsex/bukkit/PermissionsExPlugin.java:141
+msgid "Hooked into Vault for Permission and Chat interfaces"
+msgstr ""
+
+#: ninja/leaping/permissionsex/bukkit/PermissionsExPlugin.java:264
+msgid ""
+"No Permissible injector found for your server implementation (while "
+"uninjecting for %s)!"
+msgstr ""
+
+#: ninja/leaping/permissionsex/bukkit/PermissionsExPlugin.java:226
+msgid "No Permissible injector found for your server implementation!"
+msgstr ""
+
+#: ninja/leaping/permissionsex/bukkit/PermissionsExPlugin.java:234
+msgid "Permissions handler for %s successfully injected"
+msgstr ""
+
+#: ninja/leaping/permissionsex/bukkit/PermissionsExPlugin.java:266
+msgid "Permissions handler for %s successfully uninjected"
+msgstr ""
+
+#: ninja/leaping/permissionsex/bukkit/PermissionsExPlugin.java:228
+msgid "Unable to inject PEX's permissible for %s"
+msgstr ""
+
+#: ninja/leaping/permissionsex/bukkit/PermissionsExPlugin.java:237
+msgid "Unable to inject permissible for %s"
+msgstr ""
+
+#: ninja/leaping/permissionsex/bukkit/BukkitMessageFormatter.java:94
+msgid "click here to view more info"
+msgstr ""
+
+#: ninja/leaping/permissionsex/bukkit/BukkitMessageFormatter.java:101
+msgid "false"
+msgstr ""
+
+#: ninja/leaping/permissionsex/bukkit/BukkitMessageFormatter.java:101
+msgid "true"
+msgstr ""
